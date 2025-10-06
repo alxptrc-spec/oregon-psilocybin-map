@@ -2,26 +2,58 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>API Key Test</title>
+    <title>Oregon Psilocybin Service Centers</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       html, body { height: 100%; margin: 0; }
       #map { height: 100%; width: 100%; }
+      .infowindow a { text-decoration: none; color: #0077cc; }
     </style>
+
+    <!-- Your locations data (RAW Gist URL) -->
+    <script src="https://gist.githubusercontent.com/alxptrc-spec/7babc193b3b585fd42796002c372b361/raw/8189effb6d33cb57d1e8de124e02000fa4ba4680/locations_ready.js"></script>
+
     <script>
       function initMap() {
+        if (!Array.isArray(window.locations)) {
+          console.error("locations array not found or invalid");
+          alert("Could not load locations. Check Gist Raw URL and that the Gist is public.");
+          return;
+        }
+
         const map = new google.maps.Map(document.getElementById("map"), {
-          center: { lat: 44.0, lng: -120.5 },
-          zoom: 7
+          zoom: 7,
+          center: { lat: 44.0, lng: -120.5 }
         });
-        new google.maps.Marker({
-          position: { lat: 45.5152, lng: -122.6784 }, // Portland
-          map,
-          title: "Test marker"
+
+        const info = new google.maps.InfoWindow();
+
+        window.locations.forEach((loc) => {
+          if (!loc.lat || !loc.lng) return;
+
+          const marker = new google.maps.Marker({
+            position: { lat: Number(loc.lat), lng: Number(loc.lng) },
+            map,
+            title: loc.name || ""
+          });
+
+          const html = `
+            <div class="infowindow">
+              <strong>${loc.name ?? ""}</strong><br>
+              ${loc.address ?? ""}<br>
+              ${loc.phone ? `${loc.phone}<br>` : ""}
+              ${loc.website ? `<a href="${loc.website}" target="_blank" rel="noopener">Website</a>` : ""}
+            </div>
+          `;
+
+          marker.addListener("mouseover", () => { info.setContent(html); info.open({ anchor: marker, map }); });
+          marker.addListener("mouseout", () => info.close());
+          marker.addListener("click", () => { info.setContent(html); info.open({ anchor: marker, map }); });
         });
       }
       window.initMap = initMap;
     </script>
+
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAn0ukrd-imrW3zJkfrv3MYt4xpHCZe4U&callback=initMap">
     </script>
